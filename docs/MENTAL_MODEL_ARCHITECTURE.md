@@ -1,29 +1,17 @@
-This is a *great* rewrite attempt. Your mental model is already close; it just needs a few corrections and sharper edges so each layer has a **single job** and doesn’t slowly grow tentacles.
+# Architecture
 
-I’ll go line-by-line and correct where needed, then give you a clean, corrected version you can keep in your head.
-
----
-
-## Your draft, corrected
-
-### Domain
-
-> *“here lies the game logic, gameworld ticks, interaction between entities according to rules. CPU heavy.”*
-
-**Mostly right, one important correction.**
-
-**Domain = rules, not time or I/O.**
+## Domain
 
 What belongs here:
 
 * Game rules and invariants
-
   * “A crop can only advance from Sprout → Mature if watered enough”
   * “You can only plant on soil”
-* Entity behavior **expressed as pure logic**
 
+* Entity behavior **expressed as pure logic**
   * `Crop.AdvanceGrowth(state)`
   * `Farm.CanPlaceTile(x, y)`
+
 * State transitions that are deterministic and testable
 
 What does **not** belong here:
@@ -38,13 +26,13 @@ Think of Domain as:
 
 > *If the universe froze and you handed me a snapshot of the world, I could tell you what the next valid states are — but I wouldn’t advance time myself.*
 
-CPU-heavy **can** happen here, but it’s not the defining feature. Purity is.
+CPU-heavy **can** happen here, but it’s not the defining feature.
 
 ---
 
-### Infrastructure
+## Infrastructure
 
-> *“long term storage of gameworld, database CRUD, timers for what?, communication via SignalR hub, hosting the SignalR hub here”*
+Me: "long term storage of gameworld, database CRUD, timers for what?, communication via SignalR hub, hosting the SignalR hub here”
 
 You’re circling the bullseye.
 
@@ -83,7 +71,7 @@ Hosting the SignalR hub here is reasonable and common, because:
 
 ---
 
-### Presentation
+## Presentation
 
 > *“ASP.NET stuff (I dont know what an aspnet entry point is), oh I dont know any of this. The html+css+js?”*
 
@@ -158,26 +146,11 @@ It translates HTTP / WebSocket messages into method calls and sends results back
 
 ---
 
-## One powerful sanity rule
-
-If you ever ask:
-
-> “Can I unit-test this without a database, clock, or web server?”
-
-* **Yes** → Domain
-* **No, I need real-world stuff** → Infrastructure
-* **No, it’s just request/response glue** → Presentation
-
----
-
 “EF Core maps C# entity classes to tables, translates LINQ queries to SQL, tracks changes to entities, and applies those changes + schema migrations to the database.”
-20251220000000_AddSharedKeyToPlayers.cs is a perfectly reasonable migration name.
 
-Routing
-You’ve basically got two kinds of routing in this project, and it helps to keep them mentally separated:
+"20251220000000_AddSharedKeyToPlayers.cs" is a perfectly reasonable migration name.
 
-Server routing (ASP.NET “Presentation”)
-Client routing (your SPA: React/TS “Client”)
+## Routing 
 
-In a modern “MVC-ish + SPA” setup, the “pages” (/login, /farm, /market) are usually client-side routes, while the server handles API routes (/api/...) and the SignalR endpoint (/gameHub).
+Please see ROUTING.md
 

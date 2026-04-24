@@ -1,17 +1,18 @@
-// Farming Simulator – Specification 0.1
+# Farmia - a Farming Simulator - specification v0.1
+
 
 ## 1. Overview 
 
 - **Game Type**: 2D top‑down farming simulator.
 
-- **Platforms**: Web browser (client) + ASP.NET 8 webserver (backend).
+- **Platforms**: Web browser (client) + ASP.NET 9 webserver (backend).
 
 - **Core Loop**: Players plant crops, harvest, sell, upgrade tools, and expand the farm.
 
  
 ## 2. Architecture
 
-Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NET 8 App with a SignalR Hub] [SQLite DB]
+Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NET App with a SignalR Hub] [SQLite DB]
 
 - **Authority**: The server is the single source of truth for all world state; the client may apply optimistic UI updates, but must reconcile with server responses and server-pushed events.
 
@@ -44,7 +45,7 @@ Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NE
 
 
 
-## 3. Server (C# ASP.NET 8)
+## 3. Server (C# ASP.NET 9)
 
 ### 3.1. Key Components
 
@@ -185,7 +186,7 @@ The following are explicitly **out of scope** for version 0.1:
 
 ## 6. Deployment
 
-- **Server**: Run locally with `dotnet run`. For production, publish the ASP.NET 8 application and host it on a web server (e.g., Azure App Service, AWS Elastic Beanstalk, or any Linux/Windows server).  
+- **Server**: Run locally with `dotnet run`. For production, publish the ASP.NET application and host it on a web server (e.g., Azure App Service, AWS Elastic Beanstalk, or any Linux/Windows server).  
 - **Client**: Build with `npm run build` and serve the static assets via a CDN (Vercel, Netlify) or directly from the ASP.NET webserver.  
 - **Database**: Use SQLite for the world map (embedded) and PostgreSQL for other data (Azure Database for PostgreSQL, AWS RDS, or any managed PostgreSQL service).
 
