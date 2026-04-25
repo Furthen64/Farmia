@@ -1,14 +1,24 @@
 # Farmia - a Farming Simulator - specification v0.1
 
+## Early thoughts
 
-## 1. Overview 
+I want a farming simulator/game for me and my friends. 2D top down graphics, just tiles of pixel arted squares, either they are free tiles, grass, dirt, rock, ore.
+
+User's connect to the main server with a browser, login with `<username, shared secret>`.
+
+User story: Login, look at the main game grid, pan to an empty spot, I use my inventory at the top to click and change my brush to "Grass", Click on empty tile, its now grass there. Then I click on some "Carrot seeds", paint seeds on some dirt tiles if they exist, wait for rain and then they grow by ticks of the game engine.
+
+The world chunking. What the user sees is going to be subset of tiles from the massive gameworld.
+
+## 1. Overview
 
 - **Game Type**: 2D top‑down farming simulator.
 
-- **Platforms**: Web browser (client) + ASP.NET 9 webserver (backend).
+- **Platforms**: Web browser (client) + ASP.NET 9 webserver (backend on linux).
 
 - **Core Loop**: Players plant crops, harvest, sell, upgrade tools, and expand the farm.
 
+- **Coding IDE**: Mostly VSCode
  
 ## 2. Architecture
 
@@ -16,13 +26,9 @@ Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NE
 
 - **Authority**: The server is the single source of truth for all world state; the client may apply optimistic UI updates, but must reconcile with server responses and server-pushed events.
 
-
-
 - **Server**: Handles world state, user sessions, persistence, and real‑time events via SignalR.
 
-- **Client**: Renders the world, handles input, and communicates with the server via HTTP/WS and SignalR.
-
-
+- **Client**: Renders a view of the world, handles input, and communicates with the server via HTTP/WS and SignalR.
 
 ### 2.1. Viewport and Rendering
 
@@ -76,13 +82,13 @@ Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NE
 | **GET** | **/api/world/tiles** | **Return tiles for a viewport** (query: `x`, `y`, `width`, `height`) |
 
 
+### 3.3. Database
 
-### 3.3. Persistence
-
-- **Entity Framework Core** with SQLite for the world map and PostgreSQL for other data (players, inventory, transactions, market prices).
+Tech: SQLite.
+Raw SQL commands for creating table and inserting.
+Very simplistic for v0.1.
 
 - Tables: Players, Farms, Crops, Inventory, Transactions, MarketPrices, WorldMap.
-
 
 
 ## 4. Client (Browser)
@@ -141,15 +147,13 @@ Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NE
 | 1 | Surface | Grass, weeds, water patches. | Saplings, vines, etc. |
 | 2 | Lifeforms | Animals and other mobile entities. | Insects, birds, etc. |
 
-*All layers are stored in the same world grid; the Z‑value simply determines which entities can occupy a tile.*
-
-
+*All layers are stored in the same world grid; the Z‑value simply determines which entities can occupy a tile.* 
 
 ### 5.3. Timers & Buckets
 
 - **Global tick**: A single `Timer` (or async loop) fires every **1 second**.
 
-- **Per‑layer bucket**: For each Z‑layer we maintain a `Dictionary<int, List<Entity>>` where the key is the *tick number* (a monotonic counter that increments every global tick) at which the entity’s state should change.
+- **Per‑layer bucket**: For each Z‑layer we maintain a datastructure where we keep track.
 
 - **Processing**: On each tick we:
   1. Look up the bucket for the current tick.
@@ -162,50 +166,8 @@ Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NE
   * No per‑entity timers or threads.  
   * Easy to extend to new layers (just add another bucket dictionary).
 
-
-
-
-### 5.4. Non‑Goals (v0.1)
-
-The following are explicitly **out of scope** for version 0.1:
-
-- No multiplayer co-op / shared editing / conflict resolution.
-- No weather system or seasonal simulation.
-- No NPCs, quests, or dialogue systems.
-- No combat, enemies, or player damage.
-- No offline progression while the server is stopped (no catch-up simulation).
-
-### 5.5. Future Enhancements (Post‑0.1)
-
-- Multiplayer co‑op farming.
-- Weather system affecting crop growth.
-- NPCs and quests.
-- Mycelium spread in Z = 0 (requires a separate bucket and growth logic).
-
-
-
-## 6. Deployment
-
-- **Server**: Run locally with `dotnet run`. For production, publish the ASP.NET application and host it on a web server (e.g., Azure App Service, AWS Elastic Beanstalk, or any Linux/Windows server).  
-- **Client**: Build with `npm run build` and serve the static assets via a CDN (Vercel, Netlify) or directly from the ASP.NET webserver.  
-- **Database**: Use SQLite for the world map (embedded) and PostgreSQL for other data (Azure Database for PostgreSQL, AWS RDS, or any managed PostgreSQL service).
-
-
-
-## 7. Testing Strategy
-
-| Layer | Test Type | Tool |
-|-------|-----------|------|
-| Domain | Unit | xUnit + Moq |
-| Infrastructure | Integration | EF Core InMemory + SQLite |
-| Presentation | Unit | Jest + React Testing Library |
-| End‑to‑End | Cypress | Browser automation |
-| Performance | Load | k6 (simulate 1000 concurrent players) |
-
----
-
----
-
+ 
+ 
 ## 9. Glossary
 
 * **Z‑Layer** – vertical stacking of entities on a tile.  
@@ -213,6 +175,3 @@ The following are explicitly **out of scope** for version 0.1:
 * **Viewport** – subset of world tiles currently visible to the player.  
 * **SignalR** – real‑time WebSocket abstraction used for push updates.  
 
----
-
-**End of spec.0.1.txt**```

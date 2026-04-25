@@ -51,24 +51,16 @@ Think:
           │       ASP.NET Core          │
           │  (single C# web app)        │
           │                             │
-Browser   │  • `REST` endpoints           │
-(any)  <──┼──• `SignalR` hubs             │──>  SQLite / whatever
+Browser   │  • REST endpoints           │
+(any)  <──┼──• SignalR hubs             │──>  SQLite 
           │  • Static files (wwwroot)   │
           └─────────────────────────────┘
 ```
-
-Or, labeled by behavior:
-
-* `REST`: fetch world chunks, player profile, configs
-* `SignalR`: push real-time “tile changed”, “player moved”, “chat message” events
-* `DB`: persisted world state / chunks / saves
 
 So the browser is talking `directly` to the ASP.NET Core app via:
 
 * HTTP (`REST`)
 * WebSocket-ish (`SignalR`)
-
-`SignalR` is *not* “behind” the `REST API`; it lives next to it, in the same app.
 
 ---
 
@@ -96,29 +88,10 @@ A very sane split for your tile world:
 
   * Actual storage of chunks, tiles, players etc., used by the ASP.NET app when handling those calls.
 
-So: `REST` + `SignalR` are both part of “ASP.NET communication”. They’re different shapes of messages your ASP.NET Core app speaks over HTTP(S), not separate magical layers outside it.
-
-Once you see it as “one C# process, many ways in/out”, you can mix and match them to taste for your engine.
 
 ---
-Almost 🙂 — but it’s *not only* `REST`.
 
-Try this mental model:
-
-### 1. Everything goes `from Browser → ASP.NET app`
-
-The browser never talks directly to the database, or to `SignalR` as a separate thing.
-It only talks to your `ASP.NET Core app`, over HTTP(S).
-
-From the browser’s point of view, it’s just:
-
-```text
-Browser  →  http://localhost:5000/...
-                      ↑
-                  ASP.NET app
-```
-
-### 2. Inside that HTTP pipe, you can have *multiple styles*:
+### Inside that HTTP pipe, you can have *multiple styles*
 
 From the browser you can:
 
@@ -160,14 +133,9 @@ From the browser you can:
    app.MapHub<WorldHub>("/worldHub");
    ```
 
-All of these are `Browser → ASP.NET app`. `REST` is just *one* pattern on top of HTTP.
-
-So a more precise answer to your question:
-
 > “Ok so the communication takes place from Browser via REST endpoints to the ASP.NET app?”
 
 * For classic request/response data (get chunk, save settings) → `yes, via REST endpoints`.
 * For real-time events (tile changed, player moved) → usually `via SignalR`, which also goes `Browser → ASP.NET app`, but over a long-lived WebSocket-style connection instead of separate `REST` calls.
 
 Same app, same ports, different shapes of messages.
-

@@ -1,20 +1,4 @@
-// Farming Simulator – Implementation Specification 0.1 (Simplified)
-
-## 1.  Project Overview
-This document expands on *spec.0.1.txt* by detailing the concrete classes, interfaces, data‑structures, and runtime behaviour that will be used to build the 2‑D top‑down farming simulator.  
-All code is written in **C# 12** (ASP.NET 8) for the server and **TypeScript** for the client.  
-The repository is split into three logical layers:
-
-| Layer | Responsibility | Key Artifacts |
-|-------|----------------|---------------|
-| **Domain** | Pure business logic – entities, value objects, aggregates | `Domain/` |
-| **Infrastructure** | Persistence, SignalR, timers, caching | `Infrastructure/` |
-| **Presentation** | ASP.NET 8 Web API + SignalR Hub | `Presentation/` |
-| **Client** | Browser SPA (React + Redux Toolkit) | `Client/` |
-
----
-
-## 2.  Domain Layer
+ 
 
 ### 2.1  Core Entities
 
@@ -36,30 +20,13 @@ The repository is split into three logical layers:
 
 * `PlayerAggregate` – owns `Player`, `Farm`, `Inventory`.  
 * `CropAggregate` – owns `Crop` and its timers.  
-
-Repositories are defined as interfaces:
-
-```csharp
-public interface IPlayerRepository
-{
-    Task<PlayerAggregate> GetByIdAsync(Guid id);
-    Task SaveAsync(PlayerAggregate player);
-}
-
-public interface IFarmRepository
-{
-    Task<Farm> GetByIdAsync(Guid id);
-    Task SaveAsync(Farm farm);
-}
-```
-
-Concrete implementations use EF Core for PostgreSQL (players, inventory, market) and SQLite for the world map.
+ 
 
 ---
 
 ## 3.  Infrastructure Layer
 
-### 3.1  Persistence
+### 3.1  Database
 
 | Table | Columns | Notes |
 |-------|---------|-------|
@@ -70,84 +37,33 @@ Concrete implementations use EF Core for PostgreSQL (players, inventory, market)
 | `MarketPrices` | `ItemId`, `Price`, `LastUpdated` | |
 | `Transactions` | `Id`, `PlayerId`, `ItemId`, `Quantity`, `Price`, `Timestamp` | |
 
-EF Core `DbContext` contains `DbSet<T>` for each table.  
-SQLite connection string is embedded in `appsettings.Development.json`.  
-PostgreSQL connection string is read from environment variables.
-
-### 3.2  Tile Caching
-
-* **Server‑side**: `MemoryCache` with a sliding expiration of 5 min.  
-* **Client‑side**: IndexedDB store `tiles` keyed by `"x:y"`; fallback to in‑memory Map.
-
+SQLite connection string is embedded in `appsettings.dev.json` and `appsettings.prod.json`
+ 
 ### 3.3  Timer & Bucket Engine
-
-Implemented in `Infrastructure/Timers/WorldTimer.cs`.
-
-```csharp
-public class WorldTimer
-{
-    private readonly Timer _timer;
-    private readonly ConcurrentDictionary<long, List<IWorldEntity>> _buckets;
-    private long _currentTick;
-
-    public WorldTimer(TimeSpan tickInterval)
-    {
-        _timer = new Timer(OnTick, null, tickInterval, tickInterval);
-        _buckets = new ConcurrentDictionary<long, List<IWorldEntity>>();
-        _currentTick = 0;
-    }
-
-    private void OnTick(object? state)
-    {
-        try
-        {
-            var tick = Interlocked.Increment(ref _currentTick);
-            if (_buckets.TryRemove(tick, out var entities))
-            {
-                foreach (var entity in entities)
-                    entity.Update(tick);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Log and continue; prevents silent timer shutdown
-            Console.Error.WriteLine($"WorldTimer error: {ex}");
-        }
-    }
-
-    public void Schedule(IWorldEntity entity, long nextTick)
-    {
-        _buckets.AddOrUpdate(nextTick,
-            _ => new List<IWorldEntity> { entity },
-            (_, list) => { list.Add(entity); return list; });
-    }
-}
-```
-
+ 
+ 
 * `IWorldEntity` exposes `Update(long tick)`; crops implement this to advance stages.  
 * The bucket key is a monotonic tick number (increments once per global tick).  
 * Persistence of updated state is triggered inside `Update` via repository calls.
 
 ### 3.4  SignalR Hub
 
-`Infrastructure/SignalR/GameHub.cs`:
+ 
 
 ```csharp
 [Authorize]
 public class GameHub : Hub
 {
-    private readonly IPlayerRepository _playerRepo;
-    private readonly IFarmRepository _farmRepo;
-    private readonly IMarketService _marketService;
+ 
 
-    public GameHub(IPlayerRepository playerRepo, IFarmRepository farmRepo, IMarketService marketService)
+      GameHub(  playerRepo,   farmRepo,   marketService)
     {
         _playerRepo = playerRepo;
         _farmRepo = farmRepo;
         _marketService = marketService;
     }
 
-    public async Task JoinGame()
+    oinGame()
     {
         var userId = Guid.Parse(Context.User?.Identity?.Name ?? throw new InvalidOperationException("Unauthenticated"));
         var player = await _playerRepo.GetByIdAsync(userId);
@@ -155,22 +71,22 @@ public class GameHub : Hub
         await Clients.Caller.SendAsync("Initialize", player);
     }
 
-    public async Task Move(int dx, int dy)
+     Move(int dx, int dy)
     {
         // Update position, clamp to world bounds, broadcast to group
     }
 
-    public async Task PlantCrop(string type, int x, int y)
+     PlantCrop(string type, int x, int y)
     {
         // Validate, create Crop, schedule timer, broadcast
     }
 
-    public async Task HarvestCrop(int x, int y)
+     HarvestCrop(int x, int y)
     {
         // Validate ready, remove crop, add to inventory, broadcast
     }
 
-    public async Task SellItem(string itemId, int quantity)
+     SellItem(string itemId, int quantity)
     {
         // Update market, transaction log, broadcast
     }
@@ -232,9 +148,6 @@ The controller fetches tiles from `TileCache` or DB, serialises to JSON, and str
 ### 4.1  Startup Configuration
 
 ```csharp
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
-
 builder.Services.AddDbContext<WorldDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("World")));
 
@@ -245,7 +158,6 @@ builder.Services.AddScoped<IFarmRepository, FarmRepository>();
 builder.Services.AddScoped<IMarketService, MarketService>();
 
 builder.Services.AddMemoryCache(); // For tile caching
-builder.Services.AddSwaggerGen(); // API contract
 ```
 
 ### 4.2  Middleware
@@ -330,20 +242,6 @@ All actions optimistically update Redux state and revert on error.
 ## 6.  Deployment & DevOps
 
 * **No Docker** – run the server with `dotnet run` and the client with `npm run dev`.  
-* **CI** – GitHub Actions build the server, run tests, and publish a NuGet package if needed.  
-* **Monitoring** – Application Insights for ASP.NET logs, Prometheus + Grafana for timer tick rates, Sentry for client errors.
-
----
-
-## 7.  Testing Strategy
-
-| Layer | Test Type | Tool |
-|-------|-----------|------|
-| Domain | Unit | xUnit + Moq |
-| Infrastructure | Integration | EF Core InMemory + SQLite |
-| Presentation | Unit | Jest + React Testing Library |
-| End‑to‑End | Cypress | Browser automation |
-| Performance | Load | k6 (simulate 1000 concurrent players) |
 
 ---
 

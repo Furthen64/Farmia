@@ -41,10 +41,8 @@ You’re circling the bullseye.
 Correct responsibilities:
 
 * Persistence
-
-  * EF Core DbContexts
-  * Repositories
-  * SQLite / PostgreSQL
+ 
+  * SQLite 
 * Time & scheduling
 
   * Global tick loop
