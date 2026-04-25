@@ -142,13 +142,7 @@ It translates HTTP / WebSocket messages into method calls and sends results back
 * Input handling
 * Calls APIs + listens to SignalR
 
----
 
-“EF Core maps C# entity classes to tables, translates LINQ queries to SQL, tracks changes to entities, and applies those changes + schema migrations to the database.”
-
-"20251220000000_AddSharedKeyToPlayers.cs" is a perfectly reasonable migration name.
-
-## Routing 
+## Routing
 
 Please see ROUTING.md
-

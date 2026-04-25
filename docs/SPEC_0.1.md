@@ -18,8 +18,8 @@ The world chunking. What the user sees is going to be subset of tiles from the m
 
 - **Core Loop**: Players plant crops, harvest, sell, upgrade tools, and expand the farm.
 
-- **Coding IDE**: Mostly VSCode
- 
+- **Coding IDE**: Mostly VSCode.
+
 ## 2. Architecture
 
 Client (any modern browser) <-> SignalR talk to webserver <-> Webserver: [ASP.NET App with a SignalR Hub] [SQLite DB]
@@ -88,7 +88,7 @@ Tech: SQLite.
 Raw SQL commands for creating table and inserting.
 Very simplistic for v0.1.
 
-- Tables: Players, Farms, Crops, Inventory, Transactions, MarketPrices, WorldMap.
+- Tables: Players, Farms, Plants, Tools, Crops, Inventory, Transactions, MarketPrices, WorldMap.
 
 
 ## 4. Client (Browser)

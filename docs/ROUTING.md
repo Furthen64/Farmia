@@ -1,6 +1,4 @@
 
----
-
 # Understanding Web Routing
 
 ## Glossary of Technical Terms
@@ -74,9 +72,9 @@ That’s still compatible with MVC: your “Controllers” are the “C” of se
 
 In *your* layered model:
 
-* **Presentation**: request routing + controllers + hub wiring (API surface)
-* **Infrastructure**: persistence + SignalR hub implementation details + timers
-* **Domain**: pure game rules
+- **Presentation**: request routing + controllers + hub wiring (API surface)
+- **Infrastructure**: persistence + SignalR hub implementation details + timers
+- **Domain**: pure game rules
 
 So “routing to different pages” is mostly a **Client concern**, while “routing to different endpoints” is a **Presentation concern**.
 
